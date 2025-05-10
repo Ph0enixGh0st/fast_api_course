@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 
 from schemas.hotels_schemas import Hotel, HotelPATCH
 
@@ -20,9 +20,9 @@ hotels = [
 
 
 @router.get("")
-def get_all_hotels(
-    page: int | None = 1,
-    per_page: int | None = 5
+def get_hotels(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(5, ge=1, lt=15, description="Results per page")
 ):
     global hotels
 
@@ -41,20 +41,40 @@ def get_all_hotels(
 
 @router.get("/search")
 def get_hotel(
-        id: int | None = Query(None, description="ID of the hotel"),
-        name: str | None = Query(None, description="Name of the hotel"),
-        city: str | None = Query(None, description="City")
+    id: int | None = Query(None, description="ID of the hotel"),
+    name: str | None = Query(None, description="Name of the hotel"),
+    city: str | None = Query(None, description="City"),
+    page: int = Query(1, ge=1, description="Page number (not allowed when searching by ID)"),
+    per_page: int = Query(5, ge=1, lt=15, description="Results per page (not allowed when searching by ID)")
 ):
+    if id is not None and (page != 1 or per_page != 5):
+        raise HTTPException(
+            status_code=400,
+            detail="Pagination parameters `page` and `per_page` are not allowed when searching by `id`."
+        )
+
     matches = hotels
 
     if id is not None:
         matches = [hotel for hotel in matches if hotel["id"] == id]
+        return matches if matches else {"message": "No hotel found with that ID"}
+
     if name is not None:
         matches = [hotel for hotel in matches if name.lower() in hotel["name"].lower()]
     if city is not None:
         matches = [hotel for hotel in matches if city.lower() in hotel["city"].lower()]
 
-    return matches if matches else {"message": "No hotel found with your search criteria"}
+    start = (page - 1) * per_page
+    end = start + per_page
+    paginated = matches[start:end]
+
+    return {
+        "page": page,
+        "per_page": per_page,
+        "total_found": len(matches),
+        "returned": len(paginated),
+        "hotels": paginated
+    } if paginated else {"message": "No hotels found with your search criteria"}
 
 
 @router.delete("/{hotel_id}")
