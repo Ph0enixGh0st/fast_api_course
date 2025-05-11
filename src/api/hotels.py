@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException, Path, Query
 
-from schemas.hotels_schemas import Hotel, HotelPATCH
+from src.api.dependencies import PaginationSettings
+from src.schemas.hotels_schemas import Hotel, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -21,19 +22,18 @@ hotels = [
 
 @router.get("")
 def get_hotels(
-    page: int = Query(1, ge=1, description="Page number"),
-    per_page: int = Query(5, ge=1, lt=15, description="Results per page")
+    pagination: PaginationSettings
 ):
     global hotels
 
-    start = (page - 1) * per_page
-    end = start + per_page
+    start = (pagination.page - 1) * pagination.per_page
+    end = start + pagination.per_page
 
     paginated = hotels[start:end]
 
     return {
-        "page": page,
-        "per_page": per_page,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
         "total": len(hotels),
         "hotels": paginated
     }
@@ -41,13 +41,12 @@ def get_hotels(
 
 @router.get("/search")
 def get_hotel(
+    pagination: PaginationSettings,
     id: int | None = Query(None, description="ID of the hotel"),
     name: str | None = Query(None, description="Name of the hotel"),
-    city: str | None = Query(None, description="City"),
-    page: int = Query(1, ge=1, description="Page number (not allowed when searching by ID)"),
-    per_page: int = Query(5, ge=1, lt=15, description="Results per page (not allowed when searching by ID)")
+    city: str | None = Query(None, description="City")
 ):
-    if id is not None and (page != 1 or per_page != 5):
+    if id is not None and (pagination.page != 1 or pagination.per_page != 5):
         raise HTTPException(
             status_code=400,
             detail="Pagination parameters `page` and `per_page` are not allowed when searching by `id`."
@@ -64,13 +63,13 @@ def get_hotel(
     if city is not None:
         matches = [hotel for hotel in matches if city.lower() in hotel["city"].lower()]
 
-    start = (page - 1) * per_page
-    end = start + per_page
+    start = (pagination.page - 1) * pagination.per_page
+    end = start + pagination.per_page
     paginated = matches[start:end]
 
     return {
-        "page": page,
-        "per_page": per_page,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
         "total_found": len(matches),
         "returned": len(paginated),
         "hotels": paginated
