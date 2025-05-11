@@ -1,12 +1,13 @@
+from typing import List, Annotated
+
 from fastapi import APIRouter, Body, HTTPException, Path, Query
 
-from sqlalchemy import insert, delete
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy import delete, insert, select, func
 
 from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker
 from src.models.hotels_models import HotelsModel
-from src.schemas.hotels_schemas import Hotel, HotelPATCH
+from src.schemas.hotels_schemas import Hotel, HotelPATCH, HotelsPrintOut, PaginatedHotelsPrintOut
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -25,60 +26,75 @@ hotels = [
 ]
 
 
-@router.get("")
-def get_hotels(
-    pagination: PaginationSettings
-):
-    global hotels
+@router.get("", response_model=PaginatedHotelsPrintOut)
+async def get_hotels(pagination: PaginationSettings):
+    async with async_session_maker() as session:
+        total_query = select(func.count()).select_from(HotelsModel)
+        total = await session.scalar(total_query)
 
-    start = (pagination.page - 1) * pagination.per_page
-    end = start + pagination.per_page
+        offset = (pagination.page - 1) * pagination.per_page
+        query = select(HotelsModel).offset(offset).limit(pagination.per_page)
+        result = await session.execute(query)
+        hotels = result.scalars().all()
 
-    paginated = hotels[start:end]
-
-    return {
-        "page": pagination.page,
-        "per_page": pagination.per_page,
-        "total": len(hotels),
-        "hotels": paginated
-    }
+        return PaginatedHotelsPrintOut(
+            page=pagination.page,
+            per_page=pagination.per_page,
+            total_found=total,
+            hotels=hotels,
+        )
 
 
-@router.get("/search")
-def get_hotel(
+
+@router.get("/search", response_model=PaginatedHotelsPrintOut | dict)
+async def search_hotels(
     pagination: PaginationSettings,
     id: int | None = Query(None, description="ID of the hotel"),
     name: str | None = Query(None, description="Name of the hotel"),
-    city: str | None = Query(None, description="City")
+    location: str | None = Query(None, description="Location of the hotel")
 ):
-    if id is not None and (pagination.page != 1 or pagination.per_page != 5):
-        raise HTTPException(
-            status_code=400,
-            detail="Pagination parameters `page` and `per_page` are not allowed when searching by `id`."
+    async with async_session_maker() as session:
+        # ID search (no pagination override)
+        if id is not None:
+            result = await session.execute(
+                select(HotelsModel).where(HotelsModel.id == id)
+            )
+            hotel = result.scalar_one_or_none()
+            if not hotel:
+                return {"message": "No hotel found with given ID"}
+
+            return PaginatedHotelsPrintOut(
+                page=1,
+                per_page=1,
+                total_found=1,
+                hotels=[hotel],
+            )
+
+        # Build base query with optional filters
+        query = select(HotelsModel)
+        if name:
+            query = query.where(HotelsModel.name.ilike(f"%{name}%"))
+        if location:
+            query = query.where(HotelsModel.location.ilike(f"%{location}%"))
+
+        # Count total results
+        count_query = select(func.count()).select_from(query.subquery())
+        total = await session.scalar(count_query)
+
+        # Apply pagination
+        query = query.offset((pagination.page - 1) * pagination.per_page).limit(pagination.per_page)
+        result = await session.execute(query)
+        hotels = result.scalars().all()
+
+        if not hotels:
+            return {"message": "No hotels found with your search criteria"}
+
+        return PaginatedHotelsPrintOut(
+            page=pagination.page,
+            per_page=pagination.per_page,
+            total_found=total,
+            hotels=hotels,
         )
-
-    matches = hotels
-
-    if id is not None:
-        matches = [hotel for hotel in matches if hotel["id"] == id]
-        return matches if matches else {"message": "No hotel found with that ID"}
-
-    if name is not None:
-        matches = [hotel for hotel in matches if name.lower() in hotel["name"].lower()]
-    if city is not None:
-        matches = [hotel for hotel in matches if city.lower() in hotel["city"].lower()]
-
-    start = (pagination.page - 1) * pagination.per_page
-    end = start + pagination.per_page
-    paginated = matches[start:end]
-
-    return {
-        "page": pagination.page,
-        "per_page": pagination.per_page,
-        "total_found": len(matches),
-        "returned": len(paginated),
-        "hotels": paginated
-    } if paginated else {"message": "No hotels found with your search criteria"}
 
 
 @router.delete("/{hotel_id}")
@@ -111,12 +127,12 @@ async def create_hotel(
     )
 ):
     async with async_session_maker() as session:
-        add_hotel_statement = insert(HotelsModel).values(
+        add_hotel_stmt = insert(HotelsModel).values(
             **hotel_data.model_dump()
         )
         # SQL query print out upon API endpoint execution (only in dev):
-        # print(add_hotel_statement.compile(engine, compile_kwargs={"literal_binds": True}))
-        await session.execute(add_hotel_statement)
+        # print(add_hotel_stmt.compile(engine, compile_kwargs={"literal_binds": True}))
+        await session.execute(add_hotel_stmt)
         await session.commit()
 
     return {"status": "success", "created": hotel_data.name}
@@ -133,7 +149,7 @@ def put_hotel(
             if hotel_data.name is not None:
                 hotel["name"] = hotel_data.name
             if hotel_data.city is not None:
-                hotel["city"] = hotel_data.city
+                hotel["location"] = hotel_data.location
             return {"status": "success", "updated": hotel}
     return {"status": "error", "message": "Hotel not found"}
 
