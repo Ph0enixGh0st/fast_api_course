@@ -1,6 +1,11 @@
 from fastapi import APIRouter, Body, HTTPException, Path, Query
 
+from sqlalchemy import insert, delete
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
 from src.api.dependencies import PaginationSettings
+from src.database import async_session_maker
+from src.models.hotels_models import HotelsModel
 from src.schemas.hotels_schemas import Hotel, HotelPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -86,34 +91,35 @@ def delete_hotel(
 
 
 @router.post("")
-def create_hotel(
+async def create_hotel(
     hotel_data: Hotel = Body(openapi_examples={
         "1": {
             "summary": "Example 1",
             "value": {
                 "name": "River Inn",
-                "city": "Seaside, OR"
+                "location": "Seaside, OR"
                 }
             },
         "2": {
             "summary": "Example 2",
             "value": {
                 "name": "Comfort Inn & Suites",
-                "city": "Coeur d'Alene, ID"
+                "location": "Coeur d'Alene, ID"
                 }
             }
         }
     )
 ):
-    global hotels
-    hotels.append(
-        {
-            "id": hotels[-1]["id"] + 1 if hotels else 1,
-            "name": hotel_data.name,
-            "city": hotel_data.city
-        }
-    )
-    return {"status": "success", "name": hotel_data.name, "city": hotel_data.city}
+    async with async_session_maker() as session:
+        add_hotel_statement = insert(HotelsModel).values(
+            **hotel_data.model_dump()
+        )
+        # SQL query print out upon API endpoint execution (only in dev):
+        # print(add_hotel_statement.compile(engine, compile_kwargs={"literal_binds": True}))
+        await session.execute(add_hotel_statement)
+        await session.commit()
+
+    return {"status": "success", "created": hotel_data.name}
 
 
 @router.put("/{hotel_id}")
