@@ -1,5 +1,7 @@
 from sqlalchemy import select, insert
 
+from pydantic import BaseModel
+
 
 class BaseRepository:
     model = None
@@ -17,7 +19,8 @@ class BaseRepository:
         result = await self.session.execute(query)
         return result.scalars().one_or_none()
 
-    async def add(self, model_instance):
+    # .returning works only with PostgreSQL and SQLite 3.35+
+    async def add(self, model_instance: BaseModel):
         stmt = insert(self.model).values(**model_instance.model_dump()).returning(self.model.id)
         result = await self.session.execute(stmt)
-        return result.scalar()
+        return result.scalars().one()
