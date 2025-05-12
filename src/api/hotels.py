@@ -8,7 +8,7 @@ from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker, engine
 from src.models.hotels_models import HotelsModel
 from src.repo.hotels_repo import HotelsRepository
-from src.schemas.hotels_schemas import Hotel, HotelPATCH, HotelsPrintOut, PaginatedHotelsPrintOut
+from src.schemas.hotels_schemas import Hotel, HotelPATCH, HotelsPrintOut, PaginatedHotelsPrintOut, HotelUpdate
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -36,12 +36,14 @@ async def search_hotels(
 
 
 @router.delete("/{hotel_id}")
-def delete_hotel(
+async def delete_hotel(
     hotel_id: int | None = Path(description="ID of the hotel")
 ):
-    global hotels
-    hotels = [hotel for hotel in hotels if hotel["id"] != hotel_id]
-    return {"status": "success", "remaining": hotels}
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).delete(hotel_id)
+        await session.commit()
+
+    return {"status": "success", "updated": hotel}
 
 
 @router.post("")
@@ -68,24 +70,20 @@ async def create_hotel(
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
 
-    return {"status": "success", "created": hotel_data.name, "location": hotel_data.location}
-
+    # return {"status": "success", "created": hotel_data.name, "location": hotel_data.location}
+    return {"status": "success", "created": hotel}
 
 @router.put("/{hotel_id}")
-def put_hotel(
+async def put_hotel(
         hotel_id: int,
-        hotel_data: Hotel
+        hotel_data: HotelUpdate
 ):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            if hotel_data.name is not None:
-                hotel["name"] = hotel_data.name
-            if hotel_data.city is not None:
-                hotel["location"] = hotel_data.location
-            return {"status": "success", "updated": hotel}
-    return {"status": "error", "message": "Hotel not found"}
+    async with async_session_maker() as session:
+        hotel_data.id = hotel_id
+        hotel = await HotelsRepository(session).update(hotel_id, hotel_data)
+        await session.commit()
 
+    return {"status": "success", "updated": hotel}
 
 
 @router.patch("/{hotel_id}")

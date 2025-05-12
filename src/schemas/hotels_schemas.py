@@ -7,6 +7,13 @@ class Hotel(BaseModel):
     name: str
     location: str
 
+
+class HotelUpdate(BaseModel):
+    id: int
+    name: str
+    location: str
+
+
 class HotelPATCH(BaseModel):
     name: str | None = Field(None)
     location: str | None = Field(None)

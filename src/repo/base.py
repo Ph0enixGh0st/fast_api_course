@@ -1,4 +1,4 @@
-from sqlalchemy import select, insert
+from sqlalchemy import delete, insert, select, update
 
 from pydantic import BaseModel
 
@@ -22,5 +22,21 @@ class BaseRepository:
     # .returning works only with PostgreSQL and SQLite 3.35+
     async def add(self, model_instance: BaseModel):
         stmt = insert(self.model).values(**model_instance.model_dump()).returning(self.model.id)
+        result = await self.session.execute(stmt)
+        return result.scalars().one()
+
+    async def delete(self, id_: int):
+        stmt = delete(self.model).where(self.model.id == id_).returning(self.model.id)
+        result = await self.session.execute(stmt)
+        return result.scalars().one()
+
+    async def update(self, id_: int, model_instance: BaseModel):
+        values = model_instance.model_dump(exclude={"id"})
+        stmt = (
+            update(self.model)
+            .where(self.model.id == id_)
+            .values(**values)
+            .returning(self.model.id)
+        )
         result = await self.session.execute(stmt)
         return result.scalars().one()

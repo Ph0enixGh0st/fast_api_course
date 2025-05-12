@@ -15,7 +15,7 @@ class HotelsRepository(BaseRepository):
         total = await self.session.scalar(total_query)
 
         offset = (pagination.page - 1) * pagination.per_page
-        query = select(HotelsModel).offset(offset).limit(pagination.per_page)
+        query = select(HotelsModel).order_by(HotelsModel.id).offset(offset).limit(pagination.per_page)
         result = await self.session.execute(query)
         hotels = result.scalars().all()
 
