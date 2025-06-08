@@ -8,7 +8,7 @@ from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker, engine
 from src.models.hotels_models import HotelsModel
 from src.repo.hotels_repo import HotelsRepository
-from src.schemas.hotels_schemas import Hotel, HotelPATCH, HotelsPrintOut, PaginatedHotelsPrintOut, HotelUpdate
+from src.schemas.hotels_schemas import Hotel, HotelPatch, HotelsPrintOut, PaginatedHotelsPrintOut, HotelUpdate
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
@@ -19,17 +19,25 @@ async def get_all_hotels(pagination: PaginationSettings):
         return await HotelsRepository(session).get_all_hotels(pagination)
 
 
+@router.get("/{hotel_id}")
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(
+            id=hotel_id,
+        )
+
+
 @router.get("/search", response_model=PaginatedHotelsPrintOut | dict)
 async def search_hotels(
     pagination: PaginationSettings,
-    id: int | None = Query(None, description="ID of the hotel"),
+    hotel_id: int | None = Query(None, description="ID of the hotel"),
     name: str | None = Query(None, description="Name of the hotel"),
     location: str | None = Query(None, description="Location of the hotel")
 ):
     async with async_session_maker() as session:
         return await HotelsRepository(session).search_hotels(
             pagination,
-            id=id,
+            id=hotel_id,
             location=location,
             name=name
         )
@@ -43,7 +51,7 @@ async def delete_hotel(
         hotel = await HotelsRepository(session).delete(hotel_id)
         await session.commit()
 
-    return {"status": "success", "updated": hotel}
+    return {"status": "success", "deleted": hotel}
 
 
 @router.post("")
@@ -74,7 +82,7 @@ async def create_hotel(
     return {"status": "success", "created": hotel}
 
 @router.put("/{hotel_id}")
-async def put_hotel(
+async def update_hotel(
         hotel_id: int,
         hotel_data: HotelUpdate
 ):
@@ -89,7 +97,7 @@ async def put_hotel(
 @router.patch("/{hotel_id}")
 def patch_hotel(
         hotel_id: int,
-        hotel_data: HotelPATCH
+        hotel_data: HotelPatch
 ):
     global hotels
     for hotel in hotels:
@@ -98,7 +106,7 @@ def patch_hotel(
                 hotel["name"] = hotel_data.name
             if hotel_data.city:
                 hotel["city"] = hotel_data.city
-            return {"status": "success", "updated": hotel}
+            return {"status": "success", "patched": hotel}
     return {"status": "error", "message": "Hotel not found"}
 
 
