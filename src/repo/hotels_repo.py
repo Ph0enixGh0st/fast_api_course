@@ -4,11 +4,12 @@ from src.api.dependencies import PaginationSettings
 from src.database import engine
 from src.models.hotels_models import HotelsModel
 from src.repo.base import BaseRepository
-from src.schemas.hotels_schemas import PaginatedHotelsPrintOut
+from src.schemas.hotels_schemas import HotelsPrintOut, PaginatedHotelsPrintOut
 
 
 class HotelsRepository(BaseRepository):
     model = HotelsModel
+    schema = HotelsPrintOut
 
     async def get_all_hotels(self, pagination: PaginationSettings):
         total_query = select(func.count()).select_from(HotelsModel)

@@ -1,17 +1,11 @@
-from typing import List, Annotated
-
-from fastapi import APIRouter, Body, HTTPException, Path, Query
-
-from sqlalchemy import delete, insert, select, func
+from fastapi import APIRouter, Body, Path, Query
 
 from src.api.dependencies import PaginationSettings
-from src.database import async_session_maker, engine
-from src.models.hotels_models import HotelsModel
+from src.database import async_session_maker
 from src.repo.hotels_repo import HotelsRepository
-from src.schemas.hotels_schemas import Hotel, HotelPatch, HotelsPrintOut, PaginatedHotelsPrintOut, HotelUpdate
+from src.schemas.hotels_schemas import Hotel, HotelPatch, PaginatedHotelsPrintOut, HotelUpdate
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
-
 
 @router.get("", response_model=PaginatedHotelsPrintOut)
 async def get_all_hotels(pagination: PaginationSettings):
@@ -78,7 +72,6 @@ async def create_hotel(
         hotel = await HotelsRepository(session).add(hotel_data)
         await session.commit()
 
-    # return {"status": "success", "created": hotel_data.name, "location": hotel_data.location}
     return {"status": "success", "created": hotel}
 
 @router.put("/{hotel_id}")
