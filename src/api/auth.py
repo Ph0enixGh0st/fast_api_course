@@ -24,11 +24,12 @@ async def sign_up(
         session.add(new_user)
         try:
             await session.commit()
+            await session.refresh(new_user)
         except IntegrityError:
             await session.rollback()
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="User with this email already exists."
             )
 
-    return {"status": "success"}
+    return {"status": "success", "user_id": new_user.id, "email": new_user.email}
