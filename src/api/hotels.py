@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Path, Query, Depends
 
 from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker
@@ -13,27 +13,25 @@ async def get_all_hotels(pagination: PaginationSettings):
         return await HotelsRepository(session).get_all_hotels(pagination)
 
 
-@router.get("/{hotel_id}")
-async def get_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).get_one_or_none(
-            id=hotel_id,
-        )
-
-
 @router.get("/search", response_model=PaginatedHotelsPrintOut | dict)
 async def search_hotels(
     pagination: PaginationSettings,
-    hotel_id: int | None = Query(None, description="ID of the hotel"),
     name: str | None = Query(None, description="Name of the hotel"),
     location: str | None = Query(None, description="Location of the hotel")
 ):
     async with async_session_maker() as session:
         return await HotelsRepository(session).search_hotels(
             pagination,
-            id=hotel_id,
             location=location,
             name=name
+        )
+
+
+@router.get("/{hotel_id}")
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        return await HotelsRepository(session).get_one_or_none(
+            id=hotel_id,
         )
 
 
@@ -54,15 +52,15 @@ async def create_hotel(
         "1": {
             "summary": "Example 1",
             "value": {
-                "name": "River Inn",
-                "location": "Seaside, OR"
+                "name": "Test Name 1",
+                "location": "Test Location 1"
                 }
             },
         "2": {
             "summary": "Example 2",
             "value": {
-                "name": "Comfort Inn & Suites",
-                "location": "Coeur d'Alene, ID"
+                "name": "Test Name 2",
+                "location": "Test Location 2"
                 }
             }
         }
@@ -88,21 +86,12 @@ async def update_hotel(
 
 
 @router.patch("/{hotel_id}")
-def patch_hotel(
+async def patch_hotel(
         hotel_id: int,
         hotel_data: HotelPatch
 ):
-    global hotels
-    for hotel in hotels:
-        if hotel["id"] == hotel_id:
-            if hotel_data.name:
-                hotel["name"] = hotel_data.name
-            if hotel_data.city:
-                hotel["city"] = hotel_data.city
-            return {"status": "success", "patched": hotel}
-    return {"status": "error", "message": "Hotel not found"}
+    async with async_session_maker() as session:
+        hotel = await HotelsRepository(session).edit(hotel_id, hotel_data)
+        await session.commit()
 
-
-@router.get("/")
-def say_hi():
-    return "Hi Hi Hi"
+    return {"status": "success", "patched": hotel}

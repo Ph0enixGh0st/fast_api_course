@@ -8,6 +8,12 @@ from src.schemas.hotels_schemas import HotelsPrintOut, PaginatedHotelsPrintOut
 
 
 class HotelsRepository(BaseRepository):
+    """
+       Repository for hotel data operations.
+
+       ⚠️NOTE: When defining routes that use this repository, place specific paths
+       (like '/search') BEFORE parametric paths (like '/{hotel_id}') to avoid routing conflicts.
+    """
     model = HotelsModel
     schema = HotelsPrintOut
 
@@ -27,29 +33,13 @@ class HotelsRepository(BaseRepository):
             hotels=hotels,
         )
 
+
     async def search_hotels(
             self,
             pagination: PaginationSettings,
-            id,
             location,
             name
         ):
-        # ID search (no pagination override)
-        if id is not None:
-            result = await self.session.execute(
-                select(HotelsModel).where(HotelsModel.id == id)
-            )
-            hotel = result.scalar_one_or_none()
-            if not hotel:
-                return {"message": "No hotel found with given ID"}
-
-            return PaginatedHotelsPrintOut(
-                page=1,
-                per_page=1,
-                total_found=1,
-                hotels=[hotel],
-            )
-
         # Build base query with optional filters
         query = select(HotelsModel)
         if name:

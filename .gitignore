@@ -10,3 +10,12 @@ __pycache__/
 *.sqlite3
 .idea/
 .vscode/
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/

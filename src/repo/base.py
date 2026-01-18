@@ -48,3 +48,14 @@ class BaseRepository:
         )
         result = await self.session.execute(stmt)
         return result.scalars().one()
+
+    async def edit(self, id_: int, model_instance: BaseModel):
+        values = model_instance.model_dump(exclude_unset=True, exclude={"id"})
+        stmt = (
+            update(self.model)
+            .where(self.model.id == id_)
+            .values(**values)
+            .returning(self.model.id)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().one()
