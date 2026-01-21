@@ -1,11 +1,12 @@
-from fastapi import APIRouter, HTTPException, status, Response
+from fastapi import APIRouter, HTTPException, status, Response, Request
 from sqlalchemy.exc import IntegrityError
 
+from src.api.dependencies import CurrentUserId
 from src.database import async_session_maker
 from src.models.users_models import UsersModel as UserModel
 from src.repo.users_repo import UsersRepository
 from src.services.auth import AuthService
-from src.schemas.users_schemas import UserRequestAdd, User
+from src.schemas.users_schemas import UserRequestAdd
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication and authorisation"])
@@ -53,3 +54,19 @@ async def log_in(
         access_token = AuthService().create_access_token({"user_id": user.id})
         response.set_cookie("access_token", access_token)
         return {"access_token": access_token}
+
+
+@router.post("/log_out")
+async def log_out(
+        response: Response
+):
+        response.delete_cookie("access_token")
+        return {"status": "OK"}
+
+@router.get("/current_user")
+async def get_current_user(
+        user_id: CurrentUserId
+):
+    async with async_session_maker() as session:
+        user = await UsersRepository(session).get_one_or_none(id=user_id)
+        return user
