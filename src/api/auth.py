@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Response, Request
+from fastapi import APIRouter, HTTPException, status, Response
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import CurrentUserId

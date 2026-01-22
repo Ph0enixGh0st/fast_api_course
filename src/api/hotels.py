@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Path, Query, Depends
+from fastapi import APIRouter, Body, Path, Query
 
 from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker
@@ -78,7 +78,6 @@ async def update_hotel(
         hotel_data: HotelUpdate
 ):
     async with async_session_maker() as session:
-        hotel_data.id = hotel_id
         hotel = await HotelsRepository(session).update(hotel_id, hotel_data)
         await session.commit()
 

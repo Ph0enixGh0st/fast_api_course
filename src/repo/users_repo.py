@@ -1,5 +1,3 @@
-from http.client import HTTPException
-
 from pydantic import EmailStr
 from sqlalchemy import select
 

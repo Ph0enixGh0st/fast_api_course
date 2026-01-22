@@ -10,8 +10,7 @@ class Hotel(BaseModel):
 
 
 class HotelUpdate(BaseModel):
-    """Represents an update to an existing hotel, including its ID."""
-    id: int
+    """Represents an update to an existing hotel, excluding its ID (primary key)."""
     name: str
     location: str
 
