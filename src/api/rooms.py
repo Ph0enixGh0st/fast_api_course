@@ -93,7 +93,7 @@ async def update_room(
 
 @router.patch("/{room_id}")
 async def patch_room(
-        hotel_id: int,
+        room_id: int,
         room_data: RoomPatch
 ):
     async with async_session_maker() as session:
@@ -102,7 +102,7 @@ async def patch_room(
             if not hotel_exists:
                 raise HTTPException(status_code=404, detail="Hotel not found")
 
-        room = await RoomsRepository(session).edit(hotel_id, room_data)
+        room = await RoomsRepository(session).edit(room_id, room_data)
         await session.commit()
 
     return {"status": "success", "patched": room}
