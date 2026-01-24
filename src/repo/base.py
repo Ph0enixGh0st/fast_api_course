@@ -31,12 +31,12 @@ class BaseRepository:
     async def add(self, model_instance: BaseModel):
         stmt = insert(self.model).values(**model_instance.model_dump()).returning(self.model.id)
         result = await self.session.execute(stmt)
-        return result.scalars().one()
+        return result.scalars().one_or_none()
 
     async def delete(self, id_: int):
         stmt = delete(self.model).where(self.model.id == id_).returning(self.model.id)
         result = await self.session.execute(stmt)
-        return result.scalars().one()
+        return result.scalars().one_or_none()
 
     async def update(self, id_: int, model_instance: BaseModel):
         values = model_instance.model_dump(exclude={"id"})
@@ -47,7 +47,7 @@ class BaseRepository:
             .returning(self.model.id)
         )
         result = await self.session.execute(stmt)
-        return result.scalars().one()
+        return result.scalars().one_or_none()
 
     async def edit(self, id_: int, model_instance: BaseModel):
         values = model_instance.model_dump(exclude_unset=True, exclude={"id"})
@@ -58,4 +58,4 @@ class BaseRepository:
             .returning(self.model.id)
         )
         result = await self.session.execute(stmt)
-        return result.scalars().one()
+        return result.scalars().one_or_none()

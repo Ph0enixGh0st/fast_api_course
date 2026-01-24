@@ -8,13 +8,15 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from src.api.auth import router as router_auth
 from src.api.hotels import router as router_hotels
-from src.api.rooms import router as router_rooms
+from src.api.rooms import hotels_rooms_router as router_hotel_rooms
+from src.api.rooms import rooms_router as router_rooms
 
 
 app = FastAPI()
 
 app.include_router(router_auth)
 app.include_router(router_hotels)
+app.include_router(router_hotel_rooms)
 app.include_router(router_rooms)
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class Room(BaseModel):
@@ -10,15 +10,19 @@ class Room(BaseModel):
     price: int
     quantity: int
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class RoomCreate(BaseModel):
     """Represents an addition of a room to an existing hotel."""
-    hotel_id: int
     name: str
     description: str | None = Field(None)
     price: int
     quantity: int
 
+class RoomCreateInternal(RoomCreate):
+    """Internal use - includes hotel_id"""
+    hotel_id: int
 
 class RoomUpdate(BaseModel):
     """Represents an update to an existing room, excluding its ID (PK)."""

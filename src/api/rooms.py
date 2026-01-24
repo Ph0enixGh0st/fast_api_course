@@ -3,13 +3,14 @@ from fastapi import APIRouter, Body, Path, Query, HTTPException
 from src.database import async_session_maker
 from src.models.hotels_models import HotelsModel
 from src.repo.rooms_repo import RoomsRepository
-from src.schemas.rooms_schemas import Room, RoomCreate,  RoomUpdate, RoomPatch
+from src.schemas.rooms_schemas import RoomCreate,  RoomUpdate, RoomPatch, RoomCreateInternal
 
 
-router = APIRouter(prefix="/{hotel_id}/rooms", tags=["Rooms"])
+rooms_router = APIRouter(prefix="/rooms", tags=["Rooms - Standalone"])
+hotels_rooms_router = APIRouter(prefix="/hotels/{hotel_id}/rooms", tags=["Rooms via Hotels"])
 
 
-@router.get("/search")
+@hotels_rooms_router.get("/search")
 async def search_rooms(
     hotel_id: int,
     name: str | None = Query(None, description="Name of the rooms"),
@@ -23,32 +24,26 @@ async def search_rooms(
         )
 
 
-@router.get("/{room_id}")
-async def get_room(room_id: int):
-    async with async_session_maker() as session:
-        return await RoomsRepository(session).get_one_or_none(
-            id=room_id
-        )
-
-
-@router.delete("/{room_id}")
-async def delete_room(
-    room_id: int | None = Path(description="ID of the room")
+@hotels_rooms_router.get("/{room_id}")
+async def find_room_by_ids(
+        hotel_id: int,
+        room_id: int
 ):
     async with async_session_maker() as session:
-        room = await RoomsRepository(session).delete(room_id)
-        await session.commit()
+        filters = {"id": room_id, "hotel_id": hotel_id}
+        room = await RoomsRepository(session).get_one_or_none(**filters)
+        if not room:
+            raise HTTPException(404, "Room not found")
+        return room
 
-    return {"status": "success", "deleted": room}
 
-
-@router.post("")
+@hotels_rooms_router.post("/rooms")
 async def create_room(
+    hotel_id: int,
     room_data: RoomCreate = Body(openapi_examples={
         "1": {
             "summary": "Example 1",
             "value": {
-                "hotel_id": 15,
                 "name": "Test Room Name 1",
                 "description": "Test Room Description 1",
                 "price": 100500,
@@ -58,7 +53,6 @@ async def create_room(
         "2": {
             "summary": "Example 1",
             "value": {
-                "hotel_id": 15,
                 "name": "Test Room Name 2",
                 "description": "Test Room Description 2",
                 "price": 200,
@@ -69,40 +63,96 @@ async def create_room(
     )
 ):
     async with async_session_maker() as session:
-        room = await RoomsRepository(session).add(room_data)
+        # Verify hotel exists
+        hotel = await session.get(HotelsModel, hotel_id)
+        if not hotel:
+            raise HTTPException(404, "Hotel not found")
+
+        # Inject hotel_id from path
+        _room_data = room_data.model_dump()
+        _room_data["hotel_id"] = hotel_id
+
+        room = await RoomsRepository(session).add(
+            RoomCreateInternal(**_room_data)
+        )
         await session.commit()
 
     return {"status": "success", "created": room}
 
-@router.put("/{room_id}")
-async def update_room(
+
+@hotels_rooms_router.put("/{room_id}")
+async def edit_room(
+        hotel_id: int,
         room_id: int,
         room_data: RoomUpdate
 ):
     async with async_session_maker() as session:
-        if room_data.hotel_id:
-            hotel_exists = await session.get(HotelsModel, room_data.hotel_id)
-            if not hotel_exists:
-                raise HTTPException(status_code=404, detail="Hotel not found")
+        hotel = await session.get(HotelsModel, hotel_id)
+        if not hotel:
+            raise HTTPException(404, "Hotel not found")
 
-        room = await RoomsRepository(session).update(room_id, room_data)
+        existing_room = await RoomsRepository(session).get_one_or_none(
+            id=room_id,
+            hotel_id=hotel_id
+        )
+        if not existing_room:
+            raise HTTPException(404, "Room not found in this hotel")
+
+        _room_data = RoomUpdate(
+            hotel_id=hotel_id,
+            **room_data.model_dump()
+        )
+
+        room = await RoomsRepository(session).edit(room_id, _room_data)
         await session.commit()
 
     return {"status": "success", "updated": room}
 
 
-@router.patch("/{room_id}")
-async def patch_room(
-        room_id: int,
-        room_data: RoomPatch
+@rooms_router.get("/{room_id}")
+async def get_room_by_id(
+        room_id: int
 ):
     async with async_session_maker() as session:
-        if room_data.hotel_id:
-            hotel_exists = await session.get(HotelsModel, room_data.hotel_id)
-            if not hotel_exists:
-                raise HTTPException(status_code=404, detail="Hotel not found")
+        return await RoomsRepository(session).get_one_or_none(
+            id=room_id
+        )
 
-        room = await RoomsRepository(session).edit(room_id, room_data)
+
+@rooms_router.delete("/{room_id}")
+async def delete_room_by_id(
+    room_id: int | None = Path(description="ID of the room")
+):
+    async with async_session_maker() as session:
+        existing_room = await RoomsRepository(session).get_one_or_none(id=room_id)
+        if not existing_room:
+            raise HTTPException(404, "Room not found")
+        room = await RoomsRepository(session).delete(room_id)
         await session.commit()
 
-    return {"status": "success", "patched": room}
+    return {"status": "success", "deleted": room}
+
+
+@rooms_router.patch("/{room_id}")
+async def partially_edit_room(
+        hotel_id: int,
+        room_id: int,
+        room_data: RoomPatch,
+):
+    async with async_session_maker() as session:
+        existing_room = await RoomsRepository(session).get_one_or_none(
+            id=room_id,
+            hotel_id=hotel_id
+        )
+        if not existing_room:
+            raise HTTPException(404, "Room not found in this hotel")
+
+        patch_data = room_data.model_dump(exclude_unset=True)
+        patch_data["hotel_id"] = hotel_id
+
+        _room_data = RoomPatch(**patch_data)
+
+        room = await RoomsRepository(session).edit(room_id, _room_data)
+        await session.commit()
+
+    return {"status": "OK", "patched": room}
