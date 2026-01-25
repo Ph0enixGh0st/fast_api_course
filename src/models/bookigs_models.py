@@ -22,8 +22,12 @@ class BookingsModel(BaseModel):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     date_from: Mapped[date]
     date_to: Mapped[date]
-    price: Mapped[int]
+    price_per_night: Mapped[int]
 
     @hybrid_property
-    def total_cost(self):
-        return self.price * (self.date_to - self.date_from).days
+    def total_nights(self) -> int:
+        return (self.date_to - self.date_from).days
+
+    @hybrid_property
+    def total_cost(self) -> int:
+        return self.price_per_night * self.total_nights
