@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Path, Query
+from fastapi import APIRouter, Body, Path, Query, HTTPException
 
 from src.api.dependencies import PaginationSettings
 from src.database import async_session_maker
@@ -40,10 +40,12 @@ async def delete_hotel(
     hotel_id: int | None = Path(description="ID of the hotel")
 ):
     async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).delete(hotel_id)
+        deleted_hotel = await HotelsRepository(session).delete(hotel_id)
+        if not deleted_hotel:
+            raise HTTPException(404, "Hotel not found")
         await session.commit()
 
-    return {"status": "success", "deleted": hotel}
+    return {"status": "success", "deleted": deleted_hotel}
 
 
 @router.post("")

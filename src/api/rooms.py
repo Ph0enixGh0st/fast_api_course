@@ -68,7 +68,6 @@ async def create_room(
         if not hotel:
             raise HTTPException(404, "Hotel not found")
 
-        # Inject hotel_id from path
         _room_data = room_data.model_dump()
         _room_data["hotel_id"] = hotel_id
 
@@ -124,13 +123,12 @@ async def delete_room_by_id(
     room_id: int | None = Path(description="ID of the room")
 ):
     async with async_session_maker() as session:
-        existing_room = await RoomsRepository(session).get_one_or_none(id=room_id)
-        if not existing_room:
+        deleted_room = await RoomsRepository(session).delete(room_id)
+        if not deleted_room:
             raise HTTPException(404, "Room not found")
-        room = await RoomsRepository(session).delete(room_id)
         await session.commit()
 
-    return {"status": "success", "deleted": room}
+    return {"status": "success", "deleted": deleted_room}
 
 
 @rooms_router.patch("/{room_id}")
