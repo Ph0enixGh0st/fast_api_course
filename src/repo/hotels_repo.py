@@ -1,6 +1,6 @@
 from sqlalchemy import select, func
 
-from src.api.dependencies import PaginationSettings
+from src.schemas.pagination import PaginationParams
 from src.database import engine
 from src.models.hotels_models import HotelsModel
 from src.repo.base import BaseRepository
@@ -17,7 +17,7 @@ class HotelsRepository(BaseRepository):
     model = HotelsModel
     schema = HotelsPrintOut
 
-    async def get_all_hotels(self, pagination: PaginationSettings):
+    async def get_all_hotels(self, pagination: PaginationParams):
         total_query = select(func.count()).select_from(HotelsModel)
         total = await self.session.scalar(total_query)
 
@@ -36,7 +36,7 @@ class HotelsRepository(BaseRepository):
 
     async def search_hotels(
             self,
-            pagination: PaginationSettings,
+            pagination: PaginationParams,
             location,
             name
         ):

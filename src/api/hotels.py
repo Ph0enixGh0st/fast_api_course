@@ -1,55 +1,59 @@
 from fastapi import APIRouter, Body, Path, Query, HTTPException
 
-from src.api.dependencies import PaginationSettings
-from src.database import async_session_maker
-from src.repo.hotels_repo import HotelsRepository
+from src.api.dependencies import PaginationSettings, DBSpawner
 from src.schemas.hotels_schemas import Hotel, HotelPatch, PaginatedHotelsPrintOut, HotelUpdate
+
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
+
 @router.get("", response_model=PaginatedHotelsPrintOut)
-async def get_all_hotels(pagination: PaginationSettings):
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).get_all_hotels(pagination)
+async def get_all_hotels(
+        db: DBSpawner,
+        pagination: PaginationSettings
+):
+    return await db.hotels.get_all_hotels(pagination)
 
 
 @router.get("/search", response_model=PaginatedHotelsPrintOut | dict)
 async def search_hotels(
     pagination: PaginationSettings,
+    db: DBSpawner,
     name: str | None = Query(None, description="Name of the hotel"),
     location: str | None = Query(None, description="Location of the hotel")
 ):
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).search_hotels(
-            pagination,
-            location=location,
-            name=name
-        )
+    return await db.hotels.search_hotels(
+        pagination,
+        location=location,
+        name=name
+    )
 
 
 @router.get("/{hotel_id}")
-async def get_hotel(hotel_id: int):
-    async with async_session_maker() as session:
-        return await HotelsRepository(session).get_one_or_none(
+async def get_hotel(
+        hotel_id: int,
+        db: DBSpawner
+):
+        return await db.hotels.get_one_or_none(
             id=hotel_id,
         )
 
 
 @router.delete("/{hotel_id}")
 async def delete_hotel(
-    hotel_id: int | None = Path(description="ID of the hotel")
+    db: DBSpawner,
+    hotel_id: int | None = Path(description="ID of the hotel"),
 ):
-    async with async_session_maker() as session:
-        deleted_hotel = await HotelsRepository(session).delete(hotel_id)
-        if not deleted_hotel:
-            raise HTTPException(404, "Hotel not found")
-        await session.commit()
+    deleted_hotel = await db.hotels.delete(hotel_id)
+    if not deleted_hotel:
+        raise HTTPException(404, "Hotel not found")
 
     return {"status": "success", "deleted": deleted_hotel}
 
 
 @router.post("")
 async def create_hotel(
+    db: DBSpawner,
     hotel_data: Hotel = Body(openapi_examples={
         "1": {
             "summary": "Example 1",
@@ -68,31 +72,28 @@ async def create_hotel(
         }
     )
 ):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).add(hotel_data)
-        await session.commit()
+    hotel = await db.hotels.add(hotel_data)
 
     return {"status": "success", "created": hotel}
 
+
 @router.put("/{hotel_id}")
 async def update_hotel(
+        db: DBSpawner,
         hotel_id: int,
         hotel_data: HotelUpdate
 ):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).update(hotel_id, hotel_data)
-        await session.commit()
+    hotel = await db.hotels.update(hotel_id, hotel_data)
 
     return {"status": "success", "updated": hotel}
 
 
 @router.patch("/{hotel_id}")
 async def patch_hotel(
+        db: DBSpawner,
         hotel_id: int,
         hotel_data: HotelPatch
 ):
-    async with async_session_maker() as session:
-        hotel = await HotelsRepository(session).edit(hotel_id, hotel_data)
-        await session.commit()
+    hotel = await db.hotels.edit(hotel_id, hotel_data)
 
     return {"status": "success", "patched": hotel}

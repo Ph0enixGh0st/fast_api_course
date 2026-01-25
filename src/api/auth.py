@@ -2,34 +2,31 @@ from fastapi import APIRouter, HTTPException, status, Response
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import CurrentUserId
-from src.database import async_session_maker
 from src.models.users_models import UsersModel as UserModel
-from src.repo.users_repo import UsersRepository
 from src.services.auth import AuthService
 from src.schemas.users_schemas import UserRequestAdd
-
+from src.api.dependencies import DBSpawner
 
 router = APIRouter(prefix="/auth", tags=["Authentication and authorisation"])
 
 
 @router.post("/sign_up")
 async def sign_up(
-        user_data: UserRequestAdd
+        user_data: UserRequestAdd,
+        db: DBSpawner
 ):
-    async with async_session_maker() as session:
-        hashed_password = AuthService().hash_password(user_data.password)
-        new_user = UserModel(email=user_data.email, hashed_password=hashed_password)
+    hashed_password = AuthService().hash_password(user_data.password)
+    new_user = UserModel(email=user_data.email, hashed_password=hashed_password)
 
-        session.add(new_user)
-        try:
-            await session.commit()
-            await session.refresh(new_user)
-        except IntegrityError:
-            await session.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User with this email already exists."
-            )
+    db.session.add(new_user)
+    try:
+        await db.commit()
+        await db.session.refresh(new_user)
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User with this email already exists."
+        )
 
     return {"status": "success", "user_id": new_user.id, "email": new_user.email}
 
@@ -37,10 +34,10 @@ async def sign_up(
 @router.post("/log_in")
 async def log_in(
         user_data: UserRequestAdd,
-        response: Response
+        response: Response,
+        db: DBSpawner
 ):
-    async with async_session_maker() as session:
-        user = await UsersRepository(session).get_user_with_hashed_password(email=user_data.email)
+        user = await db.users.get_user_with_hashed_password(email=user_data.email)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,8 +62,8 @@ async def log_out(
 
 @router.get("/current_user")
 async def get_current_user(
-        user_id: CurrentUserId
+        user_id: CurrentUserId,
+        db: DBSpawner
 ):
-    async with async_session_maker() as session:
-        user = await UsersRepository(session).get_one_or_none(id=user_id)
-        return user
+    user = await db.users.get_one_or_none(id=user_id)
+    return user
