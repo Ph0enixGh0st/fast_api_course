@@ -7,7 +7,7 @@ class Room(BaseModel):
     hotel_id: int
     name: str
     description: str | None = Field(None)
-    price: int
+    price_per_night: int
     quantity: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -17,7 +17,7 @@ class RoomCreate(BaseModel):
     """Represents an addition of a room to an existing hotel."""
     name: str
     description: str | None = Field(None)
-    price: int
+    price_per_night: int
     quantity: int
 
 class RoomCreateInternal(RoomCreate):
@@ -29,7 +29,7 @@ class RoomUpdate(BaseModel):
     hotel_id: int = Field(ge=1)
     name: str
     description: str
-    price: int = Field(ge=1)
+    price_per_night: int = Field(ge=1)
     quantity: int = Field(ge=1)
 
 
@@ -38,5 +38,5 @@ class RoomPatch(BaseModel):
     hotel_id: int | None = Field(default=None, ge=1)
     name: str | None = Field(None)
     description: str | None = Field(None)
-    price: int | None = Field(default=None, ge=1)
+    price_per_night: int | None = Field(default=None, ge=1)
     quantity: int | None = Field(default=None, ge=1)

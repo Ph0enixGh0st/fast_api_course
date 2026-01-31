@@ -46,7 +46,7 @@ async def create_room(
             "value": {
                 "name": "Test Room Name 1",
                 "description": "Test Room Description 1",
-                "price": 100500,
+                "price_per_night": 100500,
                 "quantity": 5
                 }
             },
@@ -55,7 +55,7 @@ async def create_room(
             "value": {
                 "name": "Test Room Name 2",
                 "description": "Test Room Description 2",
-                "price": 200,
+                "price_per_night": 200,
                 "quantity": 2
                 }
             }

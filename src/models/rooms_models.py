@@ -11,5 +11,5 @@ class RoomsModel(BaseModel):
     hotel_id: Mapped[int] = mapped_column(ForeignKey("hotels.id"))
     name: Mapped[str]
     description: Mapped[str | None]
-    price: Mapped[int]
+    price_per_night: Mapped[int]
     quantity: Mapped[int]
