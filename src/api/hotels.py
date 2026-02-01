@@ -18,7 +18,7 @@ async def get_all_hotels(
     return await db.hotels.get_all_hotels(pagination)
 
 
-@router.get("/search", summary="Get hotel(s) by name and/or location", response_model=PaginatedHotelsPrintOut | dict)
+@router.get("/search", summary="Search available hotels", response_model=PaginatedHotelsPrintOut | dict)
 async def search_hotels(
     pagination: PaginationSettings,
     db: DBSpawner,
@@ -30,11 +30,9 @@ async def search_hotels(
     return await db.hotels.search_hotels(
         pagination,
         location=location,
-        name=name
-    )
-    return await db.hotels.get_filtered_by_time(
-        date_from=date_from,
+        name=name,
         date_to=date_to,
+        date_from=date_from,
     )
 
 

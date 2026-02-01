@@ -2,6 +2,8 @@ from typing import List
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.schemas.rooms_schemas import Room
+
 
 class Hotel(BaseModel):
     """Represents a basic hotel with name and location."""
@@ -26,6 +28,7 @@ class HotelsPrintOut(BaseModel):
     id: int
     name: str
     location: str
+    rooms: List[Room] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 

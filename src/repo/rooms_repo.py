@@ -55,6 +55,7 @@ class RoomsRepository(BaseRepository):
             for room, rooms_left in result.all()
         ]
 
+
     async def get_filtered_by_time(
             self,
             hotel_id,
