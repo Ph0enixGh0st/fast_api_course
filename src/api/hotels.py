@@ -4,7 +4,6 @@ from fastapi import APIRouter, Body, Path, Query, HTTPException
 
 from src.api.dependencies import PaginationSettings, DBSpawner
 from src.schemas.hotels_schemas import Hotel, HotelPatch, PaginatedHotelsPrintOut, HotelUpdate
-from src.repo.utils import rooms_ids_for_booking
 
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -83,7 +82,7 @@ async def create_hotel(
     )
 ):
     hotel = await db.hotels.add(hotel_data)
-
+    await db.commit()
     return {"status": "success", "created": hotel}
 
 
@@ -94,7 +93,7 @@ async def update_hotel(
         hotel_data: HotelUpdate
 ):
     hotel = await db.hotels.update(hotel_id, hotel_data)
-
+    await db.commit()
     return {"status": "success", "updated": hotel}
 
 
@@ -105,5 +104,5 @@ async def patch_hotel(
         hotel_data: HotelPatch
 ):
     hotel = await db.hotels.edit(hotel_id, hotel_data)
-
+    await db.commit()
     return {"status": "success", "patched": hotel}
