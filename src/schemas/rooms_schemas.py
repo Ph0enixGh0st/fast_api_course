@@ -9,6 +9,7 @@ class Room(BaseModel):
     description: str | None = Field(None)
     price_per_night: int
     quantity: int
+    rooms_left: int | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 

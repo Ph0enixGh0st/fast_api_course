@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Body, Path, Query, HTTPException
 
 from src.models.hotels_models import HotelsModel
@@ -13,13 +15,13 @@ hotels_rooms_router = APIRouter(prefix="/hotels/{hotel_id}/rooms", tags=["Rooms 
 async def search_rooms(
     db: DBSpawner,
     hotel_id: int,
-    name: str | None = Query(None, description="Name of the rooms"),
-    description: str | None = Query(None, description="Description of the rooms")
+    date_from: date | None = Query(None, example="2026-01-01", description="Search availability of rooms with date from filter applied"),
+    date_to: date | None = Query(None, example="2026-02-22", description="Search availability of rooms with date to filter applied")
 ):
     return await db.rooms.search_rooms(
         hotel_id=hotel_id,
-        name=name,
-        description=description
+        date_from=date_from,
+        date_to=date_to
     )
 
 

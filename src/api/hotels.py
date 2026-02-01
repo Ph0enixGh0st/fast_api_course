@@ -15,7 +15,7 @@ async def get_all_hotels(
     return await db.hotels.get_all_hotels(pagination)
 
 
-@router.get("/search", response_model=PaginatedHotelsPrintOut | dict)
+@router.get("/search", summary="Get hotel(s) by name and/or location", response_model=PaginatedHotelsPrintOut | dict)
 async def search_hotels(
     pagination: PaginationSettings,
     db: DBSpawner,
@@ -29,14 +29,15 @@ async def search_hotels(
     )
 
 
-@router.get("/{hotel_id}")
+@router.get("/{hotel_id}", summary="Get hotel by ID")
 async def get_hotel(
         hotel_id: int,
         db: DBSpawner
 ):
-        return await db.hotels.get_one_or_none(
-            id=hotel_id,
-        )
+        hotel = await db.hotels.get_one_or_none(id=hotel_id)
+        rooms = await db.rooms.search_rooms(hotel_id=hotel_id)
+
+        return {"hotel": hotel, "rooms": rooms}
 
 
 @router.delete("/{hotel_id}")

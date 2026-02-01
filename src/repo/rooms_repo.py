@@ -1,5 +1,8 @@
+from datetime import date
+
 from sqlalchemy import select, func
 
+from src.models.bookigs_models import BookingsModel
 from src.models.rooms_models import RoomsModel
 from src.repo.base import BaseRepository
 from src.schemas.rooms_schemas import Room
@@ -11,20 +14,42 @@ class RoomsRepository(BaseRepository):
 
     async def search_rooms(
             self,
-            hotel_id,
-            name,
-            description
+            hotel_id: int,
+            date_to: date | None = None,
+            date_from: date | None = None,
         ):
-        query = select(RoomsModel).where(RoomsModel.hotel_id==hotel_id)
-        if name:
-            query = query.where(RoomsModel.name.ilike(f"%{name}%"))
-        if description:
-            query = query.where(RoomsModel.description.ilike(f"%{description}%"))
+        rooms_count = (
+            select(BookingsModel.room_id, func.count("*").label("rooms_booked"))
+            .select_from(BookingsModel)
+            .filter(
+                BookingsModel.date_from <= date_to,
+                BookingsModel.date_to >= date_from,
+            )
+            .group_by(BookingsModel.room_id)
+            .cte(name="rooms_count")
+        )
+
+        rooms_available = (
+            select(
+                RoomsModel.id.label("room_id"),
+                (RoomsModel.quantity - func.coalesce(rooms_count.c.rooms_booked, 0)).label("rooms_left"),
+            )
+            .select_from(RoomsModel)
+            .outerjoin(rooms_count, RoomsModel.id == rooms_count.c.room_id)
+            .cte(name="rooms_available")
+        )
+
+        query = (
+            select(RoomsModel, rooms_available.c.rooms_left)
+            .join(rooms_available, RoomsModel.id == rooms_available.c.room_id)
+            .filter(
+                rooms_available.c.rooms_left > 0,
+                RoomsModel.hotel_id == hotel_id,
+            )
+        )
 
         result = await self.session.execute(query)
-        rooms = result.scalars().all()
-
-        if not rooms:
-            return {"message": "No rooms found with your search criteria"}
-
-        return rooms
+        return [
+            Room.model_validate({**room.__dict__, "rooms_left": rooms_left})
+            for room, rooms_left in result.all()
+        ]

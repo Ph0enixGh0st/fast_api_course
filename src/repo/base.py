@@ -59,3 +59,12 @@ class BaseRepository:
         )
         result = await self.session.execute(stmt)
         return result.scalars().one_or_none()
+
+    async def get_filtered(self, *filter, **filter_by):
+        query = (
+            select(self.model)
+            .filter(*filter)
+            .filter_by(**filter_by)
+        )
+        result = await self.session.execute(query)
+        return [self.schema.model_validate(model) for model in result.scalars().all()]
