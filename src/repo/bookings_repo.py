@@ -2,7 +2,7 @@ from sqlalchemy import select, func
 from pydantic import BaseModel
 from typing import List
 
-from src.models.bookigs_models import BookingsModel
+from src.models.bookings_models import BookingsModel
 from src.schemas.bookings_schemas import BookingsPrintOut
 from src.schemas.pagination import PaginationParams
 from src.repo.base import BaseRepository

@@ -1,7 +1,10 @@
+from datetime import date
+
 from fastapi import APIRouter, Body, Path, Query, HTTPException
 
 from src.api.dependencies import PaginationSettings, DBSpawner
 from src.schemas.hotels_schemas import Hotel, HotelPatch, PaginatedHotelsPrintOut, HotelUpdate
+from src.repo.utils import rooms_ids_for_booking
 
 
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
@@ -20,12 +23,18 @@ async def search_hotels(
     pagination: PaginationSettings,
     db: DBSpawner,
     name: str | None = Query(None, description="Name of the hotel"),
-    location: str | None = Query(None, description="Location of the hotel")
+    location: str | None = Query(None, description="Location of the hotel"),
+    date_from: date = Query(example="2026-01-11"),
+    date_to: date = Query(example="2026-02-22"),
 ):
     return await db.hotels.search_hotels(
         pagination,
         location=location,
         name=name
+    )
+    return await db.hotels.get_filtered_by_time(
+        date_from=date_from,
+        date_to=date_to,
     )
 
 
