@@ -24,9 +24,11 @@ async def search_hotels(
     db: DBSpawner,
     name: str | None = Query(None, description="Name of the hotel"),
     location: str | None = Query(None, description="Location of the hotel"),
-    date_from: date = Query(example="2026-01-11"),
-    date_to: date = Query(example="2026-02-22"),
+    date_from: date | None = Query(None, example="2026-01-11"),
+    date_to: date | None = Query(None, example="2026-02-22"),
 ):
+    if (date_from is None) != (date_to is None):
+        raise HTTPException(422, "Both date_from and date_to must be provided together")
     return await db.hotels.search_hotels(
         pagination,
         location=location,
