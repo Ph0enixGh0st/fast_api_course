@@ -25,3 +25,12 @@ class PaginatedAmenitiesPrintOut(BaseModel):
     per_page: int
     total_found: int
     amenities: List[AmenitiesPrintOut]
+
+
+class RoomAmenityAdd(BaseModel):
+    room_id: int
+    amenity_id: int
+
+
+class RoomAmenity(RoomAmenityAdd):
+    id: int

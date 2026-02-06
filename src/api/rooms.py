@@ -3,7 +3,9 @@ from datetime import date
 from fastapi import APIRouter, Body, Path, Query, HTTPException
 
 from src.models.hotels_models import HotelsModel
-from src.schemas.rooms_schemas import RoomCreate,  RoomUpdate, RoomPatch, RoomCreateInternal
+from src.schemas.amenities_schemas import RoomAmenityAdd
+from src.schemas.facilities_schemas import RoomFacilityAdd
+from src.schemas.rooms_schemas import RoomCreate, RoomUpdate, RoomPatch, RoomCreateInternal, Room, RoomUpdateInternal
 from src.api.dependencies import DBSpawner
 
 
@@ -25,7 +27,7 @@ async def search_rooms(
     )
 
 
-@hotels_rooms_router.get("/{room_id}")
+@hotels_rooms_router.get("/{room_id}", response_model=Room, response_model_exclude_none=True)
 async def find_room_by_ids(
         db: DBSpawner,
         hotel_id: int,
@@ -49,7 +51,9 @@ async def create_room(
                 "name": "Test Room Name 1",
                 "description": "Test Room Description 1",
                 "price_per_night": 100500,
-                "quantity": 5
+                "quantity": 5,
+                "facility_ids": [7, 11, 15],
+                "amenity_ids": [1, 2, 3]
                 }
             },
         "2": {
@@ -58,7 +62,9 @@ async def create_room(
                 "name": "Test Room Name 2",
                 "description": "Test Room Description 2",
                 "price_per_night": 200,
-                "quantity": 2
+                "quantity": 2,
+                "facility_ids": [7, 11, 15],
+                "amenity_ids": [1, 2, 3]
                 }
             }
         }
@@ -70,12 +76,18 @@ async def create_room(
     if not hotel:
         raise HTTPException(404, "Hotel not found")
 
-    _room_data = room_data.model_dump()
+    _room_data = room_data.model_dump(exclude={"facility_ids", "amenity_ids"})
     _room_data["hotel_id"] = hotel_id
 
     room = await db.rooms.add(
         RoomCreateInternal(**_room_data)
     )
+
+    room_facilities = [RoomFacilityAdd(room_id=room, facility_id=facility_id) for facility_id in room_data.facility_ids]
+    room_amenities = [RoomAmenityAdd(room_id=room, amenity_id=amenity_id) for amenity_id in room_data.amenity_ids]
+    await db.room_facilities.add_bulk(room_facilities)
+    await db.room_amenities.add_bulk(room_amenities)
+
     await db.commit()
 
     return {"status": "success", "created": room}
@@ -86,31 +98,37 @@ async def edit_room(
         db: DBSpawner,
         hotel_id: int,
         room_id: int,
-        room_data: RoomUpdate
+        room_data: RoomUpdate = Body(...)
 ):
     hotel = await db.session.get(HotelsModel, hotel_id)
     if not hotel:
         raise HTTPException(404, "Hotel not found")
 
-    existing_room = await db.rooms.get_one_or_none(
-        id=room_id,
-        hotel_id=hotel_id
-    )
+    existing_room = await db.rooms.get_one_or_none(id=room_id, hotel_id=hotel_id)
     if not existing_room:
         raise HTTPException(404, "Room not found in this hotel")
 
-    _room_data = RoomUpdate(
-        hotel_id=hotel_id,
-        **room_data.model_dump()
-    )
+    if room_data.hotel_id != hotel_id:
+        target_hotel = await db.session.get(HotelsModel, room_data.hotel_id)
+        if not target_hotel:
+            raise HTTPException(404, "Target hotel not found")
 
-    room = await db.rooms.edit(room_id, _room_data)
+    _room_data = room_data.model_dump(exclude={"facility_ids", "amenity_ids"})
+    room = await db.rooms.edit(room_id, RoomUpdateInternal(**_room_data))
+
+    await db.room_facilities.delete_where(room_id=room_id)
+    await db.room_amenities.delete_where(room_id=room_id)
+
+    room_facilities = [RoomFacilityAdd(room_id=room_id, facility_id=fid) for fid in room_data.facility_ids]
+    room_amenities = [RoomAmenityAdd(room_id=room_id, amenity_id=aid) for aid in room_data.amenity_ids]
+    await db.room_facilities.add_bulk(room_facilities)
+    await db.room_amenities.add_bulk(room_amenities)
+
     await db.commit()
-
     return {"status": "success", "updated": room}
 
 
-@rooms_router.get("/{room_id}")
+@rooms_router.get("/{room_id}", response_model=Room, response_model_exclude_none=True)
 async def get_room_by_id(
         db: DBSpawner,
         room_id: int
@@ -145,7 +163,19 @@ async def partially_edit_room(
         raise HTTPException(404, "Room not found")
 
     patch_data = room_data.model_dump(exclude_unset=True)
-    room = await db.rooms.edit(room_id, RoomPatch(**patch_data))
-    await db.commit()
 
+    if "facility_ids" in patch_data:
+        await db.room_facilities.delete_where(room_id=room_id)
+        facilities = [RoomFacilityAdd(room_id=room_id, facility_id=fid) for fid in patch_data.pop("facility_ids")]
+        await db.room_facilities.add_bulk(facilities)
+
+    if "amenity_ids" in patch_data:
+        await db.room_amenities.delete_where(room_id=room_id)
+        amenities = [RoomAmenityAdd(room_id=room_id, amenity_id=aid) for aid in patch_data.pop("amenity_ids")]
+        await db.room_amenities.add_bulk(amenities)
+
+    if patch_data:  # remaining scalar fields
+        room = await db.rooms.edit(room_id, RoomPatch(**patch_data))
+
+    await db.commit()
     return {"status": "OK", "patched": room}

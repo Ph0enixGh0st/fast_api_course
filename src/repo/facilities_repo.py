@@ -1,7 +1,7 @@
 from sqlalchemy import select, func
 
-from src.models.facilities_models import FacilitiesModel
-from src.schemas.facilities_schemas import FacilitiesPrintOut, PaginatedFacilitiesPrintOut
+from src.models.facilities_models import FacilitiesModel, RoomFacilitiesModel
+from src.schemas.facilities_schemas import FacilitiesPrintOut, PaginatedFacilitiesPrintOut, RoomFacility
 from src.schemas.pagination import PaginationParams
 from src.repo.base import BaseRepository
 
@@ -25,3 +25,8 @@ class FacilitiesRepository(BaseRepository):
             total_found=total,
             facilities=facilities,
         )
+
+
+class RoomFacilitiesRepository(BaseRepository):
+    model = RoomFacilitiesModel
+    schema = RoomFacility

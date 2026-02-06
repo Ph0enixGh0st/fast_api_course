@@ -33,10 +33,18 @@ class BaseRepository:
         result = await self.session.execute(stmt)
         return result.scalars().one_or_none()
 
+    async def add_bulk(self, data: list[BaseModel]):
+        stmt = insert(self.model).values([item.model_dump() for item in data])
+        await self.session.execute(stmt)
+
     async def delete(self, id_: int):
         stmt = delete(self.model).where(self.model.id == id_).returning(self.model.id)
         result = await self.session.execute(stmt)
         return result.scalars().one_or_none()
+
+    async def delete_where(self, **filters):
+        stmt = delete(self.model).filter_by(**filters)
+        await self.session.execute(stmt)
 
     async def update(self, id_: int, model_instance: BaseModel):
         values = model_instance.model_dump(exclude={"id"})

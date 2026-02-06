@@ -20,10 +20,18 @@ class RoomCreate(BaseModel):
     description: str | None = Field(None)
     price_per_night: int
     quantity: int
+    facility_ids: list[int] | None = Field(default=None)
+    amenity_ids: list[int] | None = Field(default=None)
 
-class RoomCreateInternal(RoomCreate):
-    """Internal use - includes hotel_id"""
+
+class RoomCreateInternal(BaseModel):
+    """Internal use - includes hotel_id, excludes relation IDs"""
     hotel_id: int
+    name: str
+    description: str | None = Field(None)
+    price_per_night: int
+    quantity: int
+
 
 class RoomUpdate(BaseModel):
     """Represents an update to an existing room, excluding its ID (PK)."""
@@ -32,6 +40,8 @@ class RoomUpdate(BaseModel):
     description: str
     price_per_night: int = Field(ge=1)
     quantity: int = Field(ge=1)
+    facility_ids: list[int]
+    amenity_ids: list[int]
 
 
 class RoomPatch(BaseModel):
@@ -41,3 +51,13 @@ class RoomPatch(BaseModel):
     description: str | None = Field(None)
     price_per_night: int | None = Field(default=None, ge=1)
     quantity: int | None = Field(default=None, ge=1)
+    facility_ids: list[int] | None = Field(default=None)
+    amenity_ids: list[int] | None = Field(default=None)
+
+
+class RoomUpdateInternal(BaseModel):
+    hotel_id: int
+    name: str
+    description: str
+    price_per_night: int
+    quantity: int

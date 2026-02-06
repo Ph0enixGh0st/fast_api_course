@@ -9,7 +9,7 @@ from src.schemas.hotels_schemas import Hotel, HotelPatch, PaginatedHotelsPrintOu
 router = APIRouter(prefix="/hotels", tags=["Hotels"])
 
 
-@router.get("", response_model=PaginatedHotelsPrintOut)
+@router.get("", response_model=PaginatedHotelsPrintOut, response_model_exclude_none=True)
 async def get_all_hotels(
         db: DBSpawner,
         pagination: PaginationSettings
@@ -56,7 +56,7 @@ async def delete_hotel(
     deleted_hotel = await db.hotels.delete(hotel_id)
     if not deleted_hotel:
         raise HTTPException(404, "Hotel not found")
-
+    await db.commit()
     return {"status": "success", "deleted": deleted_hotel}
 
 

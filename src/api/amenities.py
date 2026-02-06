@@ -11,7 +11,7 @@ async def get_all_amenities(
         db: DBSpawner,
         pagination: PaginationSettings
 ):
-    return await db.amenities.get_all_hotels(pagination)
+    return await db.amenities.get_all_amenities(pagination)
 
 
 @router.post("")
