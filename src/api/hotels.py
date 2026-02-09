@@ -43,7 +43,9 @@ async def get_hotel(
         db: DBSpawner
 ):
         hotel = await db.hotels.get_one_or_none(id=hotel_id)
-        rooms = await db.rooms.search_rooms(hotel_id=hotel_id)
+        if not hotel:
+            raise HTTPException(404, "Hotel not found")
+        rooms = await db.rooms.get_filtered(hotel_id=hotel_id)
 
         return {"hotel": hotel, "rooms": rooms}
 

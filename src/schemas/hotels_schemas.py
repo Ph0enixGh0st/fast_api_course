@@ -28,7 +28,6 @@ class HotelsPrintOut(BaseModel):
     id: int
     name: str
     location: str
-    rooms: List[Room] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
 

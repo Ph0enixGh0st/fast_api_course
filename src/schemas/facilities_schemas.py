@@ -17,10 +17,6 @@ class FacilitiesPrintOut(BaseModel):
 
 
 class PaginatedFacilitiesPrintOut(BaseModel):
-    """
-    Represents a paginated list of facilities with metadata.
-    Includes pagination details and a list of facility entries.
-    """
     page: int
     per_page: int
     total_found: int
