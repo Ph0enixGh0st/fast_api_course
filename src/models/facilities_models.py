@@ -1,6 +1,5 @@
 from sqlalchemy import String, ForeignKey
-from sqlalchemy.orm import Mapped
-from sqlalchemy.testing.schema import mapped_column
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 
 from src.database import BaseModel
 
@@ -11,6 +10,11 @@ class FacilitiesModel(BaseModel):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(100))
     description: Mapped[str] = mapped_column(String(500))
+
+    rooms: Mapped[list["RoomsModel"]] = relationship(
+        back_populates="facilities",
+        secondary="room_facilities",
+    )
 
 
 class RoomFacilitiesModel(BaseModel):

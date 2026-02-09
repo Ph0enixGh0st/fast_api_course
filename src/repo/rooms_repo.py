@@ -1,6 +1,7 @@
 from datetime import date
 
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload, joinedload
 
 from src.models.bookings_models import BookingsModel
 from src.models.rooms_models import RoomsModel
@@ -64,4 +65,28 @@ class RoomsRepository(BaseRepository):
     ):
         rooms_ids_to_get = rooms_ids_for_booking(date_from, date_to, hotel_id)
 
-        return await self.get_filtered(RoomsModel.id.in_(rooms_ids_to_get))
+        query = (
+            select(RoomsModel)
+            .options(
+                selectinload(RoomsModel.facilities),
+                selectinload(RoomsModel.amenities),
+            )
+            .filter(RoomsModel.id.in_(rooms_ids_to_get))
+        )
+
+        result = await self.session.execute(query)
+        return result.scalars().all()
+
+
+    async def get_with_relations(self, **filter_by):
+        query = (
+            select(RoomsModel)
+            .options(
+                selectinload(RoomsModel.facilities),
+                selectinload(RoomsModel.amenities),
+                joinedload(RoomsModel.hotel),
+            )
+            .filter_by(**filter_by)
+        )
+        result = await self.session.execute(query)
+        return result.scalars().one_or_none()

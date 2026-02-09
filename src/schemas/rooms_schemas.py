@@ -1,5 +1,17 @@
 from pydantic import BaseModel, Field, ConfigDict
 
+from src.schemas.facilities_schemas import FacilitiesPrintOut
+from src.schemas.amenities_schemas import AmenitiesPrintOut
+
+
+class HotelBasic(BaseModel):
+    """Minimal hotel info for room relations"""
+    id: int
+    name: str
+    location: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 class Room(BaseModel):
     """Represents a basic hotel with name and location."""
@@ -10,6 +22,20 @@ class Room(BaseModel):
     price_per_night: int
     quantity: int
     rooms_left: int | None = Field(None)
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoomWithRelations(BaseModel):
+    id: int
+    hotel_id: int
+    name: str
+    description: str | None = None
+    price_per_night: int
+    quantity: int
+    facilities: list[FacilitiesPrintOut] | None = None
+    amenities: list[AmenitiesPrintOut] | None = None
+    hotel: HotelBasic | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

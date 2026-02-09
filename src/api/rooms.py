@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Path, Query, HTTPException
 from src.models.hotels_models import HotelsModel
 from src.schemas.amenities_schemas import RoomAmenityAdd
 from src.schemas.facilities_schemas import RoomFacilityAdd
-from src.schemas.rooms_schemas import RoomCreate, RoomUpdate, RoomPatch, RoomCreateInternal, Room, RoomUpdateInternal
+from src.schemas.rooms_schemas import RoomCreate, RoomUpdate, RoomPatch, RoomCreateInternal, Room, RoomUpdateInternal, RoomWithRelations
 from src.api.dependencies import DBSpawner
 
 
@@ -26,27 +26,15 @@ async def search_rooms(
     )
 
 
-@rooms_router.get("/{room_id}", response_model=Room, response_model_exclude_none=True)
-async def find_room_by_ids(
-        db: DBSpawner,
-        hotel_id: int,
-        room_id: int
-):
-    filters = {"id": room_id, "hotel_id": hotel_id}
-    room = await db.rooms.get_one_or_none(**filters)
-    if not room:
-        raise HTTPException(404, "Room not found")
-    return room
-
-
-@rooms_router.get("/{room_id}", response_model=Room, response_model_exclude_none=True)
+@rooms_router.get("/{room_id}", response_model=RoomWithRelations, response_model_exclude_none=True)
 async def get_room_by_id(
         db: DBSpawner,
         room_id: int
 ):
-    return await db.rooms.get_one_or_none(
-        id=room_id
-    )
+    room = await db.rooms.get_with_relations(id=room_id)
+    if not room:
+        raise HTTPException(404, "Room not found")
+    return room
 
 
 @rooms_router.post("")
