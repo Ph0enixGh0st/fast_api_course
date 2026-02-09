@@ -33,6 +33,7 @@ class RoomWithRelations(BaseModel):
     description: str | None = None
     price_per_night: int
     quantity: int
+    rooms_left: int | None = None
     facilities: list[FacilitiesPrintOut] | None = None
     amenities: list[AmenitiesPrintOut] | None = None
     hotel: HotelBasic | None = None

@@ -3,11 +3,12 @@ from datetime import date
 from sqlalchemy import select, func
 
 from src.models.bookings_models import BookingsModel
+from src.repo.mappers.mappers import HotelsPrintOutMapper, HotelWithRoomsMapper, RoomMapper
 from src.schemas.pagination import PaginationParams
 from src.models.hotels_models import HotelsModel
 from src.models.rooms_models import RoomsModel
 from src.repo.base import BaseRepository
-from src.schemas.hotels_schemas import HotelsPrintOut, PaginatedHotelsPrintOut
+from src.schemas.hotels_schemas import PaginatedHotelsPrintOut
 from src.schemas.rooms_schemas import Room
 from src.repo.utils import rooms_ids_for_booking
 
@@ -20,7 +21,7 @@ class HotelsRepository(BaseRepository):
        (like '/search') BEFORE parametric paths (like '/{hotel_id}') to avoid routing conflicts.
     """
     model = HotelsModel
-    schema = HotelsPrintOut
+    mapper = HotelsPrintOutMapper
 
     async def get_all_hotels(self, pagination: PaginationParams):
         total_query = select(func.count()).select_from(HotelsModel)
@@ -100,14 +101,11 @@ class HotelsRepository(BaseRepository):
             rooms_result = await self.session.execute(rooms_query)
             rooms_by_hotel: dict[int, list[Room]] = {}
             for room, rl in rooms_result.all():
-                r = Room.model_validate({**room.__dict__, "rooms_left": rl})
+                r = RoomMapper.map_to_domain_entity(room, rooms_left=rl)
                 rooms_by_hotel.setdefault(room.hotel_id, []).append(r)
 
             hotels_out = [
-                HotelsPrintOut.model_validate({
-                    **h.__dict__,
-                    "rooms": rooms_by_hotel.get(h.id, []),
-                })
+                HotelWithRoomsMapper.map_to_domain_entity(h, rooms=rooms_by_hotel.get(h.id, []))
                 for h in hotels
             ]
         else:

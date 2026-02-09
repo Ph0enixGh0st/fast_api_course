@@ -12,12 +12,12 @@ from src.api.dependencies import DBSpawner
 rooms_router = APIRouter(prefix="/hotels/{hotel_id}/rooms", tags=["Rooms"])
 
 
-@rooms_router.get("/search")
+@rooms_router.get("/search", response_model=list[RoomWithRelations], response_model_exclude_none=True)
 async def search_rooms(
     db: DBSpawner,
     hotel_id: int,
-    date_from: date | None = Query(None, example="2026-01-01", description="Search availability of rooms with date from filter applied"),
-    date_to: date | None = Query(None, example="2026-02-22", description="Search availability of rooms with date to filter applied")
+    date_from: date = Query(..., example="2026-01-01", description="Search availability of rooms with date from filter applied"),
+    date_to: date = Query(..., example="2026-02-22", description="Search availability of rooms with date to filter applied")
 ):
     return await db.rooms.search_rooms(
         hotel_id=hotel_id,

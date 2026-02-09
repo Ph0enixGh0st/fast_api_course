@@ -28,9 +28,13 @@ class HotelsPrintOut(BaseModel):
     id: int
     name: str
     location: str
-    rooms: List[Room] | None = Field(None)
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class HotelsPrintOutWithRooms(HotelsPrintOut):
+    """Hotel with rooms - use when rooms are eagerly loaded."""
+    rooms: List[Room] | None = None
 
 
 class PaginatedHotelsPrintOut(BaseModel):

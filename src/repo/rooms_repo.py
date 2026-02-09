@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload, joinedload
 from src.models.bookings_models import BookingsModel
 from src.models.rooms_models import RoomsModel
 from src.repo.base import BaseRepository
+from src.repo.mappers.mappers import RoomMapper, RoomWithRelationsMapper
 from src.schemas.rooms_schemas import Room
 from src.repo.utils import rooms_ids_for_booking
 
@@ -13,12 +14,13 @@ from src.repo.utils import rooms_ids_for_booking
 class RoomsRepository(BaseRepository):
     model = RoomsModel
     schema = Room
+    mapper = RoomMapper
 
     async def search_rooms(
             self,
             hotel_id: int,
-            date_to: date | None = None,
-            date_from: date | None = None,
+            date_to: date,
+            date_from: date,
         ):
         rooms_count = (
             select(BookingsModel.room_id, func.count("*").label("rooms_booked"))
@@ -44,6 +46,10 @@ class RoomsRepository(BaseRepository):
         query = (
             select(RoomsModel, rooms_available.c.rooms_left)
             .join(rooms_available, RoomsModel.id == rooms_available.c.room_id)
+            .options(
+                selectinload(RoomsModel.facilities),
+                selectinload(RoomsModel.amenities),
+            )
             .filter(
                 rooms_available.c.rooms_left > 0,
                 RoomsModel.hotel_id == hotel_id,
@@ -52,7 +58,7 @@ class RoomsRepository(BaseRepository):
 
         result = await self.session.execute(query)
         return [
-            Room.model_validate({**room.__dict__, "rooms_left": rooms_left})
+            RoomWithRelationsMapper.map_to_domain_entity(room, rooms_left=rooms_left)
             for room, rooms_left in result.all()
         ]
 

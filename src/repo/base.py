@@ -2,10 +2,12 @@ from sqlalchemy import delete, insert, select, update
 
 from pydantic import BaseModel
 
+from src.repo.mappers.base import DataMapper
+
 
 class BaseRepository:
     model = None
-    schema: type[BaseModel] = None
+    mapper: DataMapper = None
 
     def __init__(self, session):
         self.session = session
@@ -14,7 +16,7 @@ class BaseRepository:
         query = select(self.model)
         result = await self.session.execute(query)
         return [
-            self.schema.model_validate(model, from_attributes=True)
+            self.mapper.map_to_domain_entity(model)
             for model in result.scalars().all()
         ]
 
@@ -25,7 +27,7 @@ class BaseRepository:
         if model is None:
             return None
         else:
-            return self.schema.model_validate(model, from_attributes=True)
+            return self.mapper.map_to_domain_entity(model)
 
     # .returning works only with PostgreSQL and SQLite 3.35+
     async def add(self, model_instance: BaseModel):
@@ -75,4 +77,4 @@ class BaseRepository:
             .filter_by(**filter_by)
         )
         result = await self.session.execute(query)
-        return [self.schema.model_validate(model, from_attributes=True) for model in result.scalars().all()]
+        return [self.mapper.map_to_domain_entity(model) for model in result.scalars().all()]
