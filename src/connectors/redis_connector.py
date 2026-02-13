@@ -22,6 +22,6 @@ class RedisConnector:
     async def delete(self, key: str):
         await self.redis.delete(key)
 
-    async def close(self):
+    async def disconnect(self):
         if self.redis:
             await self.redis.close()

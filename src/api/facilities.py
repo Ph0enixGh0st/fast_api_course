@@ -1,5 +1,8 @@
+import json
+
 from fastapi import APIRouter, Body
 
+from src.init import redis_connector
 from src.api.dependencies import PaginationSettings, DBSpawner
 from src.schemas.facilities_schemas import PaginatedFacilitiesPrintOut, Facility
 
@@ -11,7 +14,15 @@ async def get_all_facilities(
         db: DBSpawner,
         pagination: PaginationSettings
 ):
-    return await db.facilities.get_all_facilities(pagination)
+    cached_facilities = await redis_connector.get("facilities")
+    if not cached_facilities:
+        facilities = await db.facilities.get_all_facilities(pagination)
+        facilities_json = json.dumps(facilities.model_dump())
+        await redis_connector.set("facilities", facilities_json, 15)
+
+        return facilities
+    else:
+        return json.loads(cached_facilities)
 
 
 @router.post("")
