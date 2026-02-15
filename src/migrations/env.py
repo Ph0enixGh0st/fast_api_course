@@ -6,12 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from src.database import BaseModel
-from src.models.hotels_models import HotelsModel
-from src.models.rooms_models import RoomsModel
-from src.models.users_models import UsersModel
-from src.models.bookings_models import BookingsModel
-from src.models.facilities_models import FacilitiesModel
-from src.models.amenities_models import AmenitiesModel
+from src.models import *
 
 from src.config import settings
 
