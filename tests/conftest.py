@@ -21,18 +21,30 @@ async def async_main():
         await conn.run_sync(BaseModel.metadata.create_all)
 
 
-@pytest.fixture(scope="session", autouse=True)
-async def sign_up(async_main):
+@pytest.fixture(scope="function")
+async def db() -> DBManager:
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        yield db
+
+
+@pytest.fixture(scope="session")
+async def ac() -> AsyncClient:
     async with AsyncClient(
             transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
-        await ac.post(
-            "/auth/sign_up",
-            json={
-                "email": "test_signup@test-signup.com",
-                "password": "test_pwd"
-            }
-        )
+        yield ac
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def sign_up(ac, async_main):
+    await ac.post(
+        "/auth/sign_up",
+        json={
+            "email": "test_signup@test-signup.com",
+            "password": "test_pwd"
+        }
+    )
+
 
 @pytest.fixture(scope="session", autouse=True)
 async def populate_db(sign_up):
@@ -44,7 +56,7 @@ async def populate_db(sign_up):
     hotels = [HotelUpdate.model_validate(hotel) for hotel in hotels]
     rooms = [RoomCreateInternal.model_validate(room) for room in rooms]
 
-    async with DBManager(session_factory=async_session_maker_null_pool) as db:
-        await db.hotels.add_bulk(hotels)
-        await db.rooms.add_bulk(rooms)
-        await db.commit()
+    async with DBManager(session_factory=async_session_maker_null_pool) as db_:
+        await db_.hotels.add_bulk(hotels)
+        await db_.rooms.add_bulk(rooms)
+        await db_.commit()
