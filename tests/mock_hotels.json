@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "name": "The Plaza",
+    "location": "New York, Fifth Avenue 768"
+  },
+  {
+    "id": 2,
+    "name": "Beverly Hills Hotel",
+    "location": "Los Angeles, Sunset Boulevard 9641"
+  },
+  {
+    "id": 3,
+    "name": "The Drake",
+    "location": "Chicago, Michigan Avenue 140"
+  },
+  {
+    "id": 4,
+    "name": "Fontainebleau",
+    "location": "Miami Beach, Collins Avenue 4441"
+  },
+  {
+    "id": 5,
+    "name": "The Venetian",
+    "location": "Las Vegas, Las Vegas Boulevard 3355"
+  }
+]
