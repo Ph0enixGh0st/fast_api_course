@@ -1,27 +1,42 @@
 [
   {
-    "id": 1,
     "name": "The Plaza",
     "location": "New York, Fifth Avenue 768"
   },
   {
-    "id": 2,
     "name": "Beverly Hills Hotel",
     "location": "Los Angeles, Sunset Boulevard 9641"
   },
   {
-    "id": 3,
     "name": "The Drake",
     "location": "Chicago, Michigan Avenue 140"
   },
   {
-    "id": 4,
     "name": "Fontainebleau",
     "location": "Miami Beach, Collins Avenue 4441"
   },
   {
-    "id": 5,
     "name": "The Venetian",
     "location": "Las Vegas, Las Vegas Boulevard 3355"
+  },
+  {
+    "name": "The Roosevelt",
+    "location": "New Orleans, Baronne Street 130"
+  },
+  {
+    "name": "Four Seasons",
+    "location": "San Francisco, Market Street 757"
+  },
+  {
+    "name": "The Biltmore",
+    "location": "Phoenix, Missouri Avenue 2400"
+  },
+  {
+    "name": "Grand Hyatt",
+    "location": "Seattle, Pine Street 721"
+  },
+  {
+    "name": "The Ritz-Carlton",
+    "location": "Boston, Avery Street 10"
   }
 ]

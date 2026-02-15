@@ -1,6 +1,5 @@
 [
   {
-    "id": 1,
     "hotel_id": 1,
     "name": "Standard Queen",
     "description": "Classic room with queen bed and city view",
@@ -8,7 +7,6 @@
     "quantity": 8
   },
   {
-    "id": 2,
     "hotel_id": 1,
     "name": "Plaza Suite",
     "description": "Luxury suite with Central Park view",
@@ -16,7 +14,6 @@
     "quantity": 3
   },
   {
-    "id": 3,
     "hotel_id": 2,
     "name": "Garden Room",
     "description": "Ground floor room with garden access",
@@ -24,7 +21,6 @@
     "quantity": 6
   },
   {
-    "id": 4,
     "hotel_id": 2,
     "name": "Bungalow Suite",
     "description": null,
@@ -32,7 +28,6 @@
     "quantity": 2
   },
   {
-    "id": 5,
     "hotel_id": 3,
     "name": "Lakeview Double",
     "description": "Double room overlooking Lake Michigan",
@@ -40,7 +35,6 @@
     "quantity": 5
   },
   {
-    "id": 6,
     "hotel_id": 4,
     "name": "Ocean Front King",
     "description": "King bed with direct ocean view",
@@ -48,7 +42,6 @@
     "quantity": 4
   },
   {
-    "id": 7,
     "hotel_id": 4,
     "name": "Economy Twin",
     "description": "Two twin beds with pool view",
@@ -56,7 +49,6 @@
     "quantity": 10
   },
   {
-    "id": 8,
     "hotel_id": 5,
     "name": "High Roller Suite",
     "description": "Penthouse suite with Strip view",
@@ -64,7 +56,6 @@
     "quantity": 2
   },
   {
-    "id": 9,
     "hotel_id": 1,
     "name": "Deluxe King",
     "description": "Spacious room with king bed and Manhattan skyline view",
@@ -72,7 +63,6 @@
     "quantity": 4
   },
   {
-    "id": 10,
     "hotel_id": 2,
     "name": "Poolside Cabana",
     "description": "Private cabana with direct pool access",
@@ -80,7 +70,6 @@
     "quantity": 3
   },
   {
-    "id": 11,
     "hotel_id": 3,
     "name": "Executive Suite",
     "description": "Corner suite with workspace and lake view",
@@ -88,7 +77,6 @@
     "quantity": 2
   },
   {
-    "id": 12,
     "hotel_id": 3,
     "name": "Standard Single",
     "description": null,
@@ -104,7 +92,6 @@
     "quantity": 1
   },
   {
-    "id": 14,
     "hotel_id": 5,
     "name": "Standard King",
     "description": "Comfortable room with king bed",
@@ -112,11 +99,108 @@
     "quantity": 12
   },
   {
-    "id": 15,
     "hotel_id": 5,
     "name": "Venetian Suite",
     "description": "Italian-themed suite with jacuzzi",
     "price_per_night": 850,
     "quantity": 4
+  },
+  {
+    "hotel_id": 6,
+    "name": "French Quarter View",
+    "description": "Balcony room overlooking the French Quarter",
+    "price_per_night": 380,
+    "quantity": 6
+  },
+  {
+    "hotel_id": 6,
+    "name": "Jazz Suite",
+    "description": "Themed suite with vintage decor",
+    "price_per_night": 720,
+    "quantity": 2
+  },
+  {
+    "hotel_id": 6,
+    "name": "Courtyard Room",
+    "description": null,
+    "price_per_night": 260,
+    "quantity": 9
+  },
+  {
+    "hotel_id": 7,
+    "name": "Bay View King",
+    "description": "King room with Golden Gate Bridge view",
+    "price_per_night": 590,
+    "quantity": 4
+  },
+  {
+    "hotel_id": 7,
+    "name": "City Studio",
+    "description": "Compact studio in the heart of downtown",
+    "price_per_night": 340,
+    "quantity": 8
+  },
+  {
+    "hotel_id": 7,
+    "name": "Presidential Suite",
+    "description": "Top floor corner suite with panoramic bay views",
+    "price_per_night": 1800,
+    "quantity": 1
+  },
+  {
+    "hotel_id": 8,
+    "name": "Desert View Room",
+    "description": "Room with floor-to-ceiling desert landscape views",
+    "price_per_night": 270,
+    "quantity": 10
+  },
+  {
+    "hotel_id": 8,
+    "name": "Cactus Suite",
+    "description": null,
+    "price_per_night": 450,
+    "quantity": 3
+  },
+  {
+    "hotel_id": 9,
+    "name": "Harbor Double",
+    "description": "Double room with Puget Sound harbor view",
+    "price_per_night": 410,
+    "quantity": 5
+  },
+  {
+    "hotel_id": 9,
+    "name": "Skyline Suite",
+    "description": "Suite with Space Needle and skyline view",
+    "price_per_night": 880,
+    "quantity": 2
+  },
+  {
+    "hotel_id": 9,
+    "name": "Standard Twin",
+    "description": "Two twin beds with city view",
+    "price_per_night": 290,
+    "quantity": 7
+  },
+  {
+    "hotel_id": 10,
+    "name": "Classic King",
+    "description": "Elegant room with king bed and marble bath",
+    "price_per_night": 520,
+    "quantity": 6
+  },
+  {
+    "hotel_id": 10,
+    "name": "Ritz Suite",
+    "description": "Luxury suite with separate living area",
+    "price_per_night": 1400,
+    "quantity": 2
+  },
+  {
+    "hotel_id": 10,
+    "name": "Garden View Queen",
+    "description": "Queen room overlooking the Public Garden",
+    "price_per_night": 430,
+    "quantity": 5
   }
 ]
