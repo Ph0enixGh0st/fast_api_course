@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import select, func
 from pydantic import BaseModel
 from typing import List
@@ -51,6 +53,19 @@ class BookingsRepository(BaseRepository):
             total_found=total,
             bookings=[BookingsPrintOut.model_validate(b) for b in bookings],
         )
+
+
+    async def get_todays_checkins(self):
+        query = (
+            select(BookingsModel)
+            .filter(BookingsModel.date_from == date.today())
+        )
+        result = await self.session.execute(query)
+        bookings = result.scalars().all()
+        if bookings:
+            return bookings
+        else:
+            return "NO CHECKINS FOR TODAY"
 
 
 class PaginatedBookingsPrintOut(BaseModel):

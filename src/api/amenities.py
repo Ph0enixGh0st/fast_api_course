@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Body
+from fastapi_cache.decorator import cache
 
 from src.api.dependencies import PaginationSettings, DBSpawner
 from src.schemas.amenities_schemas import PaginatedAmenitiesPrintOut, Amenity
@@ -7,6 +8,7 @@ router = APIRouter(prefix="/amenities", tags=["Amenities"])
 
 
 @router.get("", response_model=PaginatedAmenitiesPrintOut)
+@cache(expire=10)
 async def get_all_amenities(
         db: DBSpawner,
         pagination: PaginationSettings
